@@ -4,13 +4,20 @@ import Link from "next/link";
 import DataTable from "@/components/DataTable";
 import { fetcher } from "@/lib/coingecko.actions";
 import { cn, formatCurrency } from "@/lib/utils";
+import { TrendingCoinsFallback } from "./fallback";
 
 const TrendingCoins = async () => {
-	const trendingCoins = await fetcher<{ coins: TrendingCoin[] }>(
-		"/search/trending",
-		undefined,
-		300,
-	);
+	let trendingCoins: { coins: TrendingCoin[] };
+	try {
+		trendingCoins = await fetcher<{ coins: TrendingCoin[] }>(
+			"/search/trending",
+			undefined,
+			300,
+		);
+	} catch (error) {
+		console.error("TrendingCoins fetch error:", error);
+		return <TrendingCoinsFallback />;
+	}
 
 	const columns: DataTableColumn<TrendingCoin>[] = [
 		{
