@@ -5,8 +5,8 @@ import qs from "query-string";
 const BASE_URL = process.env.COINGECKO_BASE_URL;
 const API_KEY = process.env.COINGECKO_API_KEY;
 
-if (!BASE_URL) throw new Error("Could Get a base Url");
-if (!API_KEY) throw new Error("Could Get a api key");
+if (!BASE_URL) throw new Error("Could not get a base URL");
+if (!API_KEY) throw new Error("Could not get an API key");
 
 export async function fetcher<T>(
 	endpoint: string,
