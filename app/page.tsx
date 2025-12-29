@@ -1,10 +1,27 @@
-import React from 'react'
+import { Suspense } from "react";
+import CoinOverview from "@/components/home/CoinOverview";
+import {
+	CoinOverviewFallback,
+	TrendingCoinsFallback,
+} from "@/components/home/fallback";
+import TrendingCoins from "@/components/home/TrendingCoins";
 
-const Page = () => {
-    return (
-        <div>
+const Page = async () => {
+	return (
+		<main className={"main-container"}>
+			<section className={"home-grid"}>
+				<Suspense fallback={<CoinOverviewFallback />}>
+					<CoinOverview />
+				</Suspense>
 
-        </div>
-    )
-}
-export default Page
+				<Suspense fallback={<TrendingCoinsFallback />}>
+					<TrendingCoins />
+				</Suspense>
+			</section>
+			<section className={"w-full mt-7 space-y-4"}>
+				<p>Categories</p>
+			</section>
+		</main>
+	);
+};
+export default Page;
