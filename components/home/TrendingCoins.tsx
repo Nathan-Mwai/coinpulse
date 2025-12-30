@@ -3,7 +3,7 @@ import Image from "next/image";
 import Link from "next/link";
 import DataTable from "@/components/DataTable";
 import { fetcher } from "@/lib/coingecko.actions";
-import { cn, formatCurrency } from "@/lib/utils";
+import { cn, formatCurrency, formatPercentage } from "@/lib/utils";
 import { TrendingCoinsFallback } from "./fallback";
 
 const TrendingCoins = async () => {
@@ -59,7 +59,7 @@ const TrendingCoins = async () => {
 						) : (
 							<TrendingDown width={16} height={16} />
 						)}
-						<p>{priceChange.toFixed(2)}%</p>
+						<p>{formatPercentage(priceChange)}</p>
 					</div>
 				);
 			},
