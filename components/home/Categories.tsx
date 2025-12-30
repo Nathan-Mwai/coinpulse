@@ -30,8 +30,14 @@ const Categories = async () => {
 			header: "Top Gainers",
 			cellClassName: "top-gainers-cell",
 			cell: (category) =>
-				category.top_3_coins.map((coin, _index) => (
-					<Image key={coin} alt={coin} src={coin} width={28} height={28} />
+				category.top_3_coins.map((coin, index) => (
+					<Image
+						key={coin}
+						alt={`Top gainer ${index + 1}`}
+						src={coin}
+						width={28}
+						height={28}
+					/>
 				)),
 		},
 		{

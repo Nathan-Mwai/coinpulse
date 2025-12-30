@@ -121,3 +121,72 @@ export const CategoriesFallback = () => {
 		</div>
 	);
 };
+
+export const CoinsPaginationFallback = () => {
+	return (
+		<div id={"coins-pagination-fallback"}>
+			<div className={"control-skeleton skeleton"} />
+			<div className={"pages-skeleton"}>
+				{[1, 2, 3, 4, 5].map((i) => (
+					<div key={i} className={"page-skeleton skeleton"} />
+				))}
+			</div>
+			<div className={"control-skeleton skeleton"} />
+		</div>
+	);
+};
+
+export const CoinsFallback = () => {
+	const columns: DataTableColumn<number>[] = [
+		{
+			id: "rank",
+			header: "Rank",
+			cellClassName: "rank-cell",
+			cell: () => <div className={"rank-skeleton skeleton"} />,
+		},
+		{
+			id: "token",
+			header: "Token",
+			cellClassName: "token-cell",
+			cell: () => (
+				<div className={"token-skeleton"}>
+					<div className={"image skeleton"} />
+					<div className={"line skeleton"} />
+				</div>
+			),
+		},
+		{
+			id: "price",
+			header: "Price",
+			cellClassName: "price-cell",
+			cell: () => <div className={"price-skeleton skeleton"} />,
+		},
+		{
+			id: "24hr-change",
+			header: "24hr Change",
+			cellClassName: "change-cell",
+			cell: () => <div className={"change-skeleton skeleton"} />,
+		},
+		{
+			id: "market-cap",
+			header: "Market Cap",
+			cellClassName: "market-cap-cell",
+			cell: () => <div className={"market-cap-skeleton skeleton"} />,
+		},
+	];
+
+	return (
+		<main id={"coins-fallback"}>
+			<div className={"content"}>
+				<h4>All Coins</h4>
+				<DataTable
+					columns={columns}
+					data={[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]}
+					rowKey={(i) => i}
+					tableClassName={"coins-table"}
+				/>
+				<CoinsPaginationFallback />
+			</div>
+		</main>
+	);
+};

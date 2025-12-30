@@ -571,6 +571,90 @@
 		}
 	}
 
+	#coins-fallback {
+		@apply py-12 px-4 sm:px-6 mx-auto max-w-360 size-full items-center gap-10 justify-center;
+
+		.content {
+			@apply flex flex-col w-full space-y-5;
+		}
+
+		.coins-table {
+			@apply bg-dark-500 rounded-xl max-h-fit overflow-hidden;
+
+			.rank-cell {
+				@apply pl-5 max-w-20! py-5 font-medium text-purple-100;
+			}
+
+			.token-cell {
+				@apply py-3 font-semibold;
+
+				.token-info {
+					@apply flex items-center gap-3;
+				}
+			}
+
+			.price-cell {
+				@apply py-4 font-medium;
+			}
+
+			.change-cell {
+				@apply font-medium;
+			}
+
+			.change-value {
+				@apply flex gap-1 items-center font-medium;
+			}
+
+			.market-cap-cell {
+				@apply pr-5 font-medium;
+			}
+		}
+
+		.rank-skeleton {
+			@apply h-4 w-8;
+		}
+
+		.token-skeleton {
+			@apply flex items-center gap-3;
+
+			.image {
+				@apply h-9 w-9 rounded-full;
+			}
+
+			.line {
+				@apply h-4 w-32;
+			}
+		}
+
+		.price-skeleton {
+			@apply h-4 w-20;
+		}
+
+		.change-skeleton {
+			@apply h-4 w-16;
+		}
+
+		.market-cap-skeleton {
+			@apply h-4 w-24;
+		}
+	}
+
+	#coins-pagination-fallback {
+		@apply flex w-full justify-between items-center;
+
+		.control-skeleton {
+			@apply h-10 w-24 rounded-sm;
+		}
+
+		.pages-skeleton {
+			@apply flex flex-1 justify-center gap-2;
+
+			.page-skeleton {
+				@apply h-10 w-10 rounded-sm;
+			}
+		}
+	}
+
 	#coins-page {
 		@apply py-12 px-4 sm:px-6 mx-auto max-w-360 size-full items-center gap-10 justify-center;
 

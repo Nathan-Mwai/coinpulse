@@ -3,7 +3,7 @@ import Image from "next/image";
 import Link from "next/link";
 import DataTable from "@/components/DataTable";
 import { fetcher } from "@/lib/coingecko.actions";
-import {cn, formatCurrency, formatPercentage} from "@/lib/utils";
+import { cn, formatCurrency, formatPercentage } from "@/lib/utils";
 import { TrendingCoinsFallback } from "./fallback";
 
 const TrendingCoins = async () => {
