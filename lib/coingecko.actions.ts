@@ -20,6 +20,7 @@ export async function fetcher<T>(
 		},
 		{ skipEmptyString: true, skipNull: true },
 	);
+	console.log("Fetching...",url);
 	//TODO: Use Elysia instead (If possible)
 	const response = await fetch(url, {
 		headers: {
