@@ -1,148 +1,125 @@
-import {useEffect, useRef, useState} from "react";
+import { useEffect, useRef, useState } from "react";
 
+// --- Types ---
 
-const WS_BASE = `${process.env.NEXT_PUBLIC_COINGECKO_WEBSOCKET_URL}?x_cg_demo_api_key=${process.env.NEXT_PUBLIC_COINGECKO_API_KEY}`;
-export const useWebsocket = ({
-                                 coinId,
-                                 poolId,
-                                 liveInterval
-}:UseCoinGeckoWebSocketProps):UseCoinGeckoWebSocketReturn => {
-    const wsRef = useRef<WebSocket>(null);
-    const subscribed = useRef(<Set<string>>new Set())
+interface UseBinanceWebSocketProps {
+    symbol: string; // From CoinGecko (e.g., "btc", "eth")
+}
 
-    const [price, setPrice] = useState<ExtendedPriceData | null>(null)
-    const [trades, setTrades] = useState<Trade[]>([])
-    const [ohlcv, setOhlcv] = useState<OHLCData | null>(null)
-    const [isWsReady, setIsWsReady] = useState(false)
+interface UseBinanceWebSocketReturn {
+    price: CurrentPriceData | null;
+    trades: Trade[];
+    ohlcv: OHLCData | null;
+    isConnected: boolean;
+}
+
+interface CurrentPriceData {
+    price: number;
+    change24h?: number; // Percent change
+    high24h?: number;
+    low24h?: number;
+    volume24h?: number;
+}
+
+interface Trade {
+    price: number;
+    amount: number;
+    timestamp: number;
+    isBuyerMaker: boolean; // true = Sell order, false = Buy order
+}
+
+type OHLCData = {
+    t: number; // Open Time
+    o: number; // Open
+    h: number; // High
+    l: number; // Low
+    c: number; // Close
+    v: number; // Volume
+    isClosed: boolean; // Is the candle finished?
+};
+
+// --- Hook ---
+
+export const useBinanceWebSocket = ({ symbol }: UseBinanceWebSocketProps): UseBinanceWebSocketReturn => {
+    const wsRef = useRef<WebSocket | null>(null);
+    const [isConnected, setIsConnected] = useState(false);
+
+    // State
+    const [price, setPrice] = useState<CurrentPriceData | null>(null);
+    const [trades, setTrades] = useState<Trade[]>([]);
+    const [ohlcv, setOhlcv] = useState<OHLCData | null>(null);
 
     useEffect(() => {
-        const ws = new WebSocket(WS_BASE);
+        if (!symbol) return;
+
+        // 1. Prepare the Binance Symbol (e.g., "btcusdt")
+        const binanceSymbol = `${symbol.toLowerCase()}usdt`;
+
+        // 2. Construct Combined Stream URL
+        // Streams:
+        // - miniTicker: 1s updates for the main price display
+        // - kline_1m: 1m updates for the chart
+        // - aggTrade: Real-time trade history
+        const streams = [
+            `${binanceSymbol}@miniTicker`,
+            `${binanceSymbol}@kline_1m`,
+            `${binanceSymbol}@aggTrade`
+        ].join("/");
+
+        const ws = new WebSocket(`${process.env.NEXT_PUBLIC_BINANCE_WEBSOCKET_URL}/stream?streams=${streams}`);
         wsRef.current = ws;
 
-        const send = (payload: Record<string, unknown>) => ws.send(JSON.stringify(payload));
-        const handleMessage = (event: MessageEvent) => {
-            const msg: WebSocketMessage = JSON.parse(event.data);
+        ws.onopen = () => setIsConnected(true);
+        ws.onclose = () => setIsConnected(false);
 
-            //Keeps connection alive
-            if(msg.type === "ping"){
-                send({type:"pong"});
-                return;
+        ws.onmessage = (event) => {
+            const message = JSON.parse(event.data);
+            const streamType = message.stream.split("@")[1]; // Extract stream type (miniTicker, kline_1m, etc.)
+            const data = message.data;
+
+            // --- Handle 1s Price Updates (miniTicker) ---
+            if (streamType === "miniTicker") {
+                setPrice({
+                    price: parseFloat(data.c),      // Current Close Price
+                    change24h: parseFloat(data.P),  // 24h % Change
+                    high24h: parseFloat(data.h),    // High
+                    low24h: parseFloat(data.l),     // Low
+                    volume24h: parseFloat(data.v),  // Volume
+                });
             }
-        if(msg.type === "confirm_subscription"){
-            const {channel} = JSON.parse(msg?.identifier?? "");
 
-            subscribed.current.add(channel);
-        }
-        if(msg.c === "C1"){
-            setPrice({
-                usd: msg.p ?? 0,
-                coin:msg.i,
-                price:msg.p,
-                change24h: msg.pp,
-                marketCap: msg.m,
-                volume24h: msg.v,
-                timestamp: msg.t,
-            });
-        }
-        if(msg.c === "G2"){
-            const newTrade :Trade = {
-                price:msg.pu,
-                value:msg.vo,
-                timestamp:msg.t??0,
-                type:msg.ty,
-                amount:msg.to,
-            };
-            setTrades((prev)=> [newTrade, ...prev].slice(0,7));
-        }
-        if(msg.ch === "G3"){
-            const timestamp = msg.t ?? 0;
-
-            const candle:OHLCData = [
-                timestamp,
-                Number(msg.o ?? 0),
-                Number(msg.h ?? 0),
-                Number(msg.l ?? 0),
-                Number(msg.c ?? 0)
-            ]
-
-            setOhlcv(candle);
-        }
-        }
-
-        ws.onopen =() => setIsWsReady(true)
-
-        ws.onmessage = handleMessage;
-
-        ws.onclose = () => setIsWsReady(false)
-
-        return () => ws.close()
-
-    },[])
-
-    useEffect(() => {
-        if(!isWsReady) return
-
-        const ws = wsRef.current;
-        if(!ws)return
-
-        const send = (payload: Record<string, unknown>) => ws.send(JSON.stringify(payload));
-
-        const unsubscribeAll = () => {
-            subscribed.current.forEach((channel) => {
-                send({
-                    command: "unsubscribe",
-                    identifier: JSON.stringify({ channel }),
-                })
-            })
-
-            subscribed.current.clear
-        }
-
-        const subscribe = (channel:string, data?:Record<string, unknown>) => {
-            if(subscribed.current.has(channel)) return;
-
-            send({
-                command: "subscribe",
-                identifier: JSON.stringify({channel}),
-            })
-
-            if(data){
-                send({
-                    command: "message",
-                    identifier: JSON.stringify({ channel }),
-                    data: JSON.stringify(data)
-                })
+            // --- Handle Chart Data (kline_1m) ---
+            if (streamType === "kline_1m") {
+                const k = data.k;
+                setOhlcv({
+                    t: k.t,
+                    o: parseFloat(k.o),
+                    h: parseFloat(k.h),
+                    l: parseFloat(k.l),
+                    c: parseFloat(k.c),
+                    v: parseFloat(k.v),
+                    isClosed: k.x // Binance flag: true if candle is closed
+                });
             }
-        }
 
-        queueMicrotask(()=>{
-            setPrice(null)
-            setTrades([])
-            setOhlcv(null)
+            // --- Handle Live Trades (aggTrade) ---
+            if (streamType === "aggTrade") {
+                const newTrade: Trade = {
+                    price: parseFloat(data.p),
+                    amount: parseFloat(data.q),
+                    timestamp: data.T,
+                    isBuyerMaker: data.m // Maker = Seller
+                };
 
-            unsubscribeAll()
+                // Keep only last 20 trades to prevent memory leaks
+                setTrades((prev) => [newTrade, ...prev].slice(0, 20));
+            }
+        };
 
-            subscribe('CGSimplePrice', {coin_id:[coinId], action:"set_tokens"})
-        })
+        return () => {
+            ws.close();
+        };
+    }, [symbol]);
 
-        const poolAddress = poolId.replace("_",":")
-        if(poolAddress){
-            subscribe("OnchainTrade",{
-                "network_id:pool_addresses": [poolAddress],
-                action:"set_pools"
-            })
-            subscribe("OnchainOHLCV",{
-                "network_id:pool_addresses": [poolAddress],
-                interval:liveInterval,
-                action:"set_pools"
-            })
-        }
-    },[coinId, poolId, isWsReady,liveInterval])
-
-    return{
-        price,
-        trades,
-        ohlcv,
-        isConnected:isWsReady,
-    }
-}
+    return { price, trades, ohlcv, isConnected };
+};
